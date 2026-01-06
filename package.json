@@ -11,10 +11,16 @@
     "dev": "ts-node src/server.ts podaci/konfiguracija.csv 3000",
     "watch": "tsc --watch"
   },
-  "keywords": ["tmdb", "movies", "api", "rest"],
+  "keywords": [
+    "tmdb",
+    "movies",
+    "api",
+    "rest"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.18.2",
     "express-session": "^1.17.3",
     "sqlite3": "^5.1.6"
