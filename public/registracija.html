@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registracija</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        input {
+            padding: 8px;
+            font-size: 14px;
+        }
+        button {
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .poruka {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .greska {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .uspjeh {
+            background: #d4edda;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <h1>Registracija</h1>
+    
+    <form id="forma-registracija">
+        <input type="text" name="korisnicko_ime" placeholder="Korisnicko ime" required>
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="password" name="lozinka" placeholder="Lozinka" required>
+        <input type="text" name="ime" placeholder="Ime" required>
+        <input type="text" name="prezime" placeholder="Prezime" required>
+        <input type="date" name="datum_rodenja" placeholder="Datum rodenja" required>
+        <button type="submit">Registriraj se</button>
+    </form>
+
+    <div id="poruka"></div>
+
+    <p><a href="/">Povratak na pocetnu</a></p>
+
+    <script>
+        const forma = document.getElementById('forma-registracija');
+        const porukaDiv = document.getElementById('poruka');
+
+        forma.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const podaci = {
+                korisnicko_ime: forma.korisnicko_ime.value,
+                email: forma.email.value,
+                lozinka: forma.lozinka.value,
+                ime: forma.ime.value,
+                prezime: forma.prezime.value,
+                datum_rodenja: forma.datum_rodenja.value
+            };
+
+            try {
+                const response = await fetch('/api/registracija', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(podaci)
+                });
+
+                const rezultat = await response.json();
+
+                if (response.ok) {
+                    porukaDiv.className = 'poruka uspjeh';
+                    porukaDiv.textContent = rezultat.poruka;
+                    forma.reset();
+                } else {
+                    porukaDiv.className = 'poruka greska';
+                    porukaDiv.textContent = rezultat.greska;
+                }
+            } catch (greska) {
+                porukaDiv.className = 'poruka greska';
+                porukaDiv.textContent = 'Greska pri registraciji';
+            }
+        });
+    </script>
+</body>
+</html>

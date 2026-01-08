@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prijava</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 20px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .poruka {
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .greska {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .uspjeh {
+            background: #d4edda;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <h1>Prijava</h1>
+    <form id="forma-prijava">
+        <input type="text" name="korisnicko_ime" placeholder="Korisnicko ime" required>
+        <input type="password" name="lozinka" placeholder="Lozinka" required>
+        <button type="submit">Prijavi se</button>
+    </form>
+    <div id="poruka"></div>
+    <p><a href="/reg">Registracija</a> | <a href="/">Pocetna</a></p>
+
+    <script>
+        const forma = document.getElementById('forma-prijava');
+        const porukaDiv = document.getElementById('poruka');
+
+        forma.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const korime = forma.korisnicko_ime.value;
+            const lozinka = forma.lozinka.value;
+
+            try {
+                const response = await fetch(`/rest/korisnici/${korime}/prijava`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lozinka: lozinka })
+                });
+
+                const rezultat = await response.json();
+
+                if (response.ok) {
+                    porukaDiv.className = 'poruka uspjeh';
+                    porukaDiv.textContent = rezultat.poruka;
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1000);
+                } else {
+                    porukaDiv.className = 'poruka greska';
+                    porukaDiv.textContent = rezultat.greska;
+                }
+            } catch (greska) {
+                porukaDiv.className = 'poruka greska';
+                porukaDiv.textContent = 'Greska pri prijavi';
+            }
+        });
+    </script>
+</body>
+</html>

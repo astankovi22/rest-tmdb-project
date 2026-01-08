@@ -1,0 +1,97 @@
+<div id="navbar">
+    <div id="navbar-info">
+        <span id="datum-vrijeme"></span>
+        <span id="korisnik-info"></span>
+    </div>
+    <nav>
+        <a href="/">Pocetna</a>
+        <a href="/info">Info</a>
+        <span id="nav-links"></span>
+    </nav>
+</div>
+
+<style>
+    #navbar {
+        background: #333;
+        color: white;
+        padding: 10px 20px;
+        margin-bottom: 20px;
+    }
+    #navbar-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        font-size: 14px;
+    }
+    #datum-vrijeme {
+        text-align: left;
+    }
+    #korisnik-info {
+        text-align: right;
+    }
+    nav a {
+        color: white;
+        text-decoration: none;
+        margin-right: 15px;
+    }
+    nav a:hover {
+        text-decoration: underline;
+    }
+</style>
+
+<script>
+    function formatirajDatum(datum) {
+        const dan = String(datum.getDate()).padStart(2, '0');
+        const mjesec = String(datum.getMonth() + 1).padStart(2, '0');
+        const godina = datum.getFullYear();
+        const sat = String(datum.getHours()).padStart(2, '0');
+        const minuta = String(datum.getMinutes()).padStart(2, '0');
+        const sekunda = String(datum.getSeconds()).padStart(2, '0');
+        
+        return `${dan}.${mjesec}.${godina} ${sat}:${minuta}:${sekunda}`;
+    }
+
+    function azurirajDatumVrijeme() {
+        const datumVrijeme = formatirajDatum(new Date());
+        document.getElementById('datum-vrijeme').textContent = datumVrijeme;
+    }
+
+    async function ucitajNavbar() {
+        try {
+            const response = await fetch('/api/provjera-sesije');
+            const podaci = await response.json();
+            
+            azurirajDatumVrijeme();
+
+            let navLinks = '';
+            let korisnikInfo = '';
+
+            if (podaci.prijavljen) {
+                const uloga = podaci.korisnik.uloga === 'administrator' ? 'administrator' : 'obican korisnik';
+                korisnikInfo = `${podaci.korisnik.ime} ${podaci.korisnik.prezime} (${uloga})`;
+                
+                if (podaci.korisnik.uloga === 'administrator') {
+                    navLinks = '<a href="/korisnici">Korisnici</a>';
+                } else {
+                    navLinks = '<a href="/detalji">Detalji</a><a href="/gledano">Gledano</a>';
+                }
+                navLinks += '<a href="/odjava">Odjava</a>';
+            } else {
+                korisnikInfo = 'Gost';
+                navLinks = '<a href="/reg">Registracija</a><a href="/prijava">Prijava</a>';
+            }
+
+            document.getElementById('korisnik-info').textContent = korisnikInfo;
+            document.getElementById('nav-links').innerHTML = navLinks;
+
+        } catch (greska) {
+            console.error('Greska pri ucitavanju navbar:', greska);
+            azurirajDatumVrijeme();
+            document.getElementById('korisnik-info').textContent = 'Gost';
+            document.getElementById('nav-links').innerHTML = '<a href="/reg">Registracija</a><a href="/prijava">Prijava</a>';
+        }
+    }
+
+    setInterval(azurirajDatumVrijeme, 1000);
+    ucitajNavbar();
+</script>

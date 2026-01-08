@@ -34,7 +34,7 @@ function pripremiPutanjeServera(server: Application, konf: Konfiguracija, baza: 
   }));
 
   pripremiPutanjeAplikacija(server);
-  pripremiPutanjeAutentifikacija(server, baza);
+  pripremiPutanjeAutentifikacija(server, baza, konf);
   pripremiPutanjeServis(server, konf);
 
   server.use((zahtjev, odgovor) => {

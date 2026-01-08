@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pretraga TV Serija</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #pretraga {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        #rezultati {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 20px;
+        }
+        .serija {
+            text-align: center;
+            cursor: pointer;
+        }
+        .serija img {
+            width: 100%;
+            height: auto;
+        }
+        .serija h3 {
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        #stranicenje {
+            margin-top: 20px;
+            text-align: center;
+        }
+        button {
+            padding: 5px 10px;
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="navbar-container"></div>
+
+    <div class="container">
+        <h1>Pretraga TV Serija</h1>
+        <input type="text" id="pretraga" placeholder="Unesite naziv serije (min 2 znaka)">
+        <div id="rezultati"></div>
+        <div id="stranicenje"></div>
+    </div>
+
+    <script>
+        fetch('/navbar.html')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('navbar-container').innerHTML = html;
+            });
+
+        let trenutnaStranica = 1;
+        let trenutniQuery = '';
+        let ukupnoStranica = 0;
+
+        const pretragaInput = document.getElementById('pretraga');
+        const rezultatiDiv = document.getElementById('rezultati');
+        const straniceDiv = document.getElementById('stranicenje');
+
+        pretragaInput.addEventListener('input', (e) => {
+            const query = e.target.value;
+            if (query.length >= 2) {
+                trenutniQuery = query;
+                trenutnaStranica = 1;
+                dohvatiSerije(query, 1);
+            } else {
+                rezultatiDiv.innerHTML = '';
+                straniceDiv.innerHTML = '';
+            }
+        });
+
+        async function dohvatiSerije(query, stranica) {
+            const url = `/api/serije?q=${encodeURIComponent(query)}&stranica=${stranica}`;
+            
+            try {
+                const response = await fetch(url);
+                const podaci = await response.json();
+                
+                if (podaci.greska) {
+                    rezultatiDiv.innerHTML = '<p>' + podaci.greska + '</p>';
+                    return;
+                }
+
+                prikaziRezultate(podaci);
+                prikaziStranicenje(podaci);
+            } catch (greska) {
+                rezultatiDiv.innerHTML = '<p>Greska pri dohvatu podataka</p>';
+            }
+        }
+
+        async function provjeriPrijavu() {
+            try {
+                const response = await fetch('/api/provjera-sesije');
+                const podaci = await response.json();
+                return podaci.prijavljen;
+            } catch {
+                return false;
+            }
+        }
+
+        function prikaziRezultate(podaci) {
+            rezultatiDiv.innerHTML = '';
+
+            if (podaci.results.length === 0) {
+                rezultatiDiv.innerHTML = '<p>Nema rezultata</p>';
+                return;
+            }
+
+            podaci.results.forEach(async (serija) => {
+                const div = document.createElement('div');
+                div.className = 'serija';
+
+                const img = document.createElement('img');
+                if (serija.poster_path) {
+                    img.src = 'https://image.tmdb.org/t/p/w200' + serija.poster_path;
+                } else {
+                    img.src = 'https://via.placeholder.com/200x300?text=Nema+slike';
+                }
+                img.alt = serija.original_name;
+
+                const naslov = document.createElement('h3');
+                naslov.textContent = serija.original_name;
+
+                const prijavljen = await provjeriPrijavu();
+                if (prijavljen) {
+                    div.style.cursor = 'pointer';
+                    div.onclick = () => {
+                        window.location.href = `/detalji?id=${serija.id}`;
+                    };
+                }
+
+                div.appendChild(img);
+                div.appendChild(naslov);
+                rezultatiDiv.appendChild(div);
+            });
+        }
+
+        function prikaziStranicenje(podaci) {
+            straniceDiv.innerHTML = '';
+            ukupnoStranica = podaci.total_pages;
+
+            if (ukupnoStranica <= 1) return;
+
+            if (trenutnaStranica > 1) {
+                const prethodna = document.createElement('button');
+                prethodna.textContent = 'Prethodna';
+                prethodna.onclick = () => {
+                    trenutnaStranica--;
+                    dohvatiSerije(trenutniQuery, trenutnaStranica);
+                };
+                straniceDiv.appendChild(prethodna);
+            }
+
+            const info = document.createElement('span');
+            info.textContent = ' Stranica ' + trenutnaStranica + ' od ' + ukupnoStranica + ' ';
+            straniceDiv.appendChild(info);
+
+            if (trenutnaStranica < ukupnoStranica) {
+                const sljedeca = document.createElement('button');
+                sljedeca.textContent = 'Sljedeca';
+                sljedeca.onclick = () => {
+                    trenutnaStranica++;
+                    dohvatiSerije(trenutniQuery, trenutnaStranica);
+                };
+                straniceDiv.appendChild(sljedeca);
+            }
+        }
+    </script>
+</body>
+</html>
